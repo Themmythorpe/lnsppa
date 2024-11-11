@@ -34,11 +34,14 @@ export default {
     },
     orderNoFilter(str) {
       return str.substring(0, 30)
+    },
+    toThousandFilter(num) {
+      return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',')
     }
   },
   data() {
     return {
-      list: null
+      list: []
     }
   },
   created() {
@@ -46,9 +49,21 @@ export default {
   },
   methods: {
     fetchData() {
-      transactionList().then(response => {
-        this.list = response.data.items.slice(0, 8)
-      })
+      // Mock data for demonstration purposes
+      this.list = [
+        { order_no: '123456789012345678901234567890', price: 1000, status: 'success' },
+        { order_no: '223456789012345678901234567890', price: 2000, status: 'pending' },
+        { order_no: '323456789012345678901234567890', price: 1500, status: 'success' },
+        { order_no: '423456789012345678901234567890', price: 2500, status: 'pending' },
+        { order_no: '523456789012345678901234567890', price: 3000, status: 'success' },
+        { order_no: '623456789012345678901234567890', price: 3500, status: 'pending' },
+        { order_no: '723456789012345678901234567890', price: 4000, status: 'success' },
+        { order_no: '823456789012345678901234567890', price: 4500, status: 'pending' }
+      ];
+
+      //       transactionList().then(response => {
+      //   this.list = response.data.items.slice(0, 8)
+      // })
     }
   }
 }
