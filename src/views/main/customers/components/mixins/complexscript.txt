@@ -1,0 +1,646 @@
+<template>
+  <div class="app-container">
+    <div class="filter-container" style="float: right;">
+      <el-input
+        v-model="listQuery.search"
+        placeholder="Search"
+        style="width: 200px;"
+        class="filter-item"
+        @keyup.enter.native="handleFilter"
+      />
+      <el-button v-waves class="filter-item" type="primary" icon="el-icon-search" @click="handleFilter" />
+      <el-button
+        class="filter-item"
+        style="margin-left: 10px;"
+        type="primary"
+        icon="el-icon-plus"
+        @click="handleCreate"
+      />
+      <el-button class="filter-item" style="margin-left: 10px;" type="primary" icon="el-icon-refresh" @click="getList" />
+    </div>
+
+    <el-table
+      :key="tableKey"
+      v-loading="listLoading"
+      :data="list"
+      border
+      fit
+      highlight-current-row
+      style="width: 100%;"
+    >
+      <el-table-column
+        label="Account Id"
+
+        align="center"
+        width="120px"
+      >
+        <template slot-scope="{row}">
+          <span>{{ row.account_id }}</span>
+        </template>
+      </el-table-column>
+      <el-table-column label="Full Name" min-width="200">
+        <template slot-scope="{row}">
+          <span>{{ row.first_name }} {{ row.last_name }}</span>
+        </template>
+      </el-table-column>
+      <el-table-column label="Email" min-width="200">
+        <template slot-scope="{row}">
+          <span class="link-type">{{ row.email }}</span>
+          <!-- <el-tag>{{ row.type | typeFilter }}</el-tag> -->
+        </template>
+      </el-table-column>
+      <el-table-column label="Phone Number" min-width="200">
+        <template slot-scope="{row}">
+          <span>{{ row.phone_code }} {{ row.phone_number }}</span>
+        </template>
+      </el-table-column>
+      <el-table-column label="Status" class-name="status-col" width="100">
+        <template slot-scope="{row}">
+          <el-tag :type="row.status | statusFilter">
+            {{ row.status }}
+          </el-tag>
+        </template>
+      </el-table-column>
+      <el-table-column label="Actions" align="center" width="230" class-name="small-padding fixed-width">
+        <template slot-scope="{row,$index}">
+          <el-button type="primary" size="mini" @click="handleUpdate(row)">
+            Edit
+          </el-button>
+          <el-button
+            v-if="row.status!='published'"
+            size="mini"
+            type="success"
+            @click="handleModifyStatus(row,'published')"
+          >
+            Publish
+          </el-button>
+          <!-- <el-button v-if="row.status!='draft'" size="mini" @click="handleModifyStatus(row,'draft')">
+              Draft
+            </el-button> -->
+          <el-button v-if="row.status!='deleted'" size="mini" type="danger" @click="handleDelete(row,$index)">
+            Delete
+          </el-button>
+        </template>
+      </el-table-column>
+    </el-table>
+
+    <pagination
+      v-show="total>0"
+      :total="total"
+      :page.sync="listQuery.page"
+      :limit.sync="listQuery.limit"
+      @pagination="getList"
+    />
+
+    <el-dialog :title="textMap[dialogCreateStatus]" :visible.sync="dialogCreateFormVisible">
+      <el-form ref="accountForm" style="width: 100%; padding:0 30px;" @submit.prevent="createAccountForm">
+        <el-form-item>
+
+          <el-col :span="12">
+            <el-form-item label="First Name">
+              <el-input v-model="first_name" type="text" />
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item label="Last Name">
+              <el-input v-model="last_name" type="text" />
+            </el-form-item>
+          </el-col>
+        </el-form-item>
+        <el-form-item>
+          <el-col :span="12">
+            <label for="street_address">Address</label>
+            <textarea v-model="street_address" type="text" class="h-50 form-control" />
+          </el-col>
+          <el-col :span="12">
+            <label for="street_address2">Address 2 (Optional)</label>
+            <textarea v-model="street_address2" type="text" class="h-50 form-control" />
+          </el-col>
+        </el-form-item>
+
+        <el-form-item>
+          <el-col :span="12">
+            <label for="first_name">Where did you hear about us</label>
+            <textarea v-model="where_did_you_hear_about_us" type="text" class="h-50 form-control" />
+          </el-col>
+          <el-col :span="12">
+            <label for="receive_mails">Receive Mail</label>
+            <textarea v-model="receive_mails" type="text" class="h-50 form-control" />
+          </el-col>
+        </el-form-item>
+        <el-form-item>
+          <el-col :span="12">
+            <label for="is_login">Is Login</label>
+            <el-input v-model="is_login" type="text" class="col-12" />
+          </el-col>
+          <el-col :span="12">
+            <label for="role">Role</label>
+            <el-input v-model="role" type="text" class="col-12" />
+          </el-col>
+        </el-form-item>
+        <el-form-item>
+          <el-col :span="8">
+            <label for="city">City</label>
+            <el-input v-model="city" type="text" />
+          </el-col>
+          <el-col :span="8">
+            <label for="state">State</label>
+            <el-input v-model="state" type="text" class="col-4" />
+          </el-col>
+          <el-col :span="8">
+            <label for="country">Country</label>
+            <el-input v-model="country" type="text" />
+          </el-col>
+        </el-form-item>
+        <el-form-item>
+          <el-col :span="12">
+            <label for="postcode">Postcode</label>
+            <el-input v-model="postcode" type="number" />
+          </el-col>
+          <el-col :span="12">
+            <label for="customer_cat">Customer Category</label>
+            <el-input v-model="customer_cat" type="text" class="col-4" />
+          </el-col>
+        </el-form-item>
+        <el-form-item>
+          <el-col :span="12">
+            <label for="currency">Currency</label>
+            <el-input v-model="currency" type="text" class="col-12" />
+          </el-col>
+          <el-col :span="12">
+            <label for="status">Status</label><br>
+            <el-select v-model="status" class="filter-item" placeholder="Please select" style="width: 100%;">
+              <el-option v-for="item in statusOptions" :key="item" :label="item" :value="item" />
+            </el-select>
+          </el-col>
+        </el-form-item>
+        <el-form-item>
+          <el-col :span="12">
+            <label for="email">Email</label>
+            <el-input v-model="email" type="email" class="col-12" />
+          </el-col>
+          <el-col :span="12">
+            <label for="phone code">Phone Code</label>
+            <el-input v-model="phone_code" type="number" class="col-12" />
+          </el-col>
+          <el-col :span="12">
+            <label for="phone number">Phone Number</label>
+            <el-input v-model="phone_number" type="number" class="col-12" />
+          </el-col>
+          <el-col :span="12">
+            <label for="share data">Share data</label>
+            <el-input v-model="share_personal_data" type="text" class="col-12" />
+          </el-col>
+          <el-col :span="12">
+            <label for="security_questions">Security Questions</label>
+            <el-input v-model="security_questions" type="text" class="col-12" />
+          </el-col>
+          <el-col :span="12">
+            <label for="security_answer">Security Answer</label>
+            <el-input v-model="security_answer" type="text" class="col-12" />
+          </el-col>
+          <el-col :span="12">
+            <label for="password">Password</label>
+            <el-input v-model="password" type="text" class="col-12" />
+          </el-col>
+          <el-col :span="12">
+            <label for="password_confirmation">Password Confirmation</label>
+            <el-input v-model="password_confirmation" type="text" class="col-12" />
+          </el-col>
+
+        </el-form-item>
+        <el-form-item class="mx-2">
+          <el-button type="primary" @click="createAccountForm">Confirm</el-button>
+        </el-form-item>
+      </el-form>
+    </el-dialog>
+
+    <el-dialog :visible.sync="dialogPvVisible" title="Reading statistics">
+      <el-table :data="pvData" border fit highlight-current-row style="width: 100%">
+        <el-table-column prop="key" label="Channel" />
+        <el-table-column prop="pv" label="Pv" />
+      </el-table>
+      <span slot="footer" class="dialog-footer">
+        <el-button type="primary" @click="dialogPvVisible = false">Confirm</el-button>
+      </span>
+    </el-dialog>
+  </div>
+</template>
+
+<script>
+import axios from 'axios'
+import { getToken } from '@/utils/auth'
+import { fetchPv, createArticle } from '../../../../api/article'
+import waves from '../../waves' // waves directive
+import { parseTime } from '../../../../utils'
+import Pagination from '../../pagination' // secondary package based on el-pagination
+
+const calendarTypeOptions = [
+  { key: 'CN', display_name: 'China' },
+  { key: 'US', display_name: 'USA' },
+  { key: 'JP', display_name: 'Japan' },
+  { key: 'EU', display_name: 'Eurozone' }
+]
+
+// arr to obj, such as { CN : "China", US : "USA" }
+const calendarTypeKeyValue = calendarTypeOptions.reduce((acc, cur) => {
+  acc[cur.key] = cur.display_name
+  return acc
+}, {})
+
+export default {
+  name: 'ComplexTable',
+  components: { Pagination },
+  directives: { waves },
+  filters: {
+    statusFilter(status) {
+      const statusMap = {
+        published: 'success',
+        draft: 'info',
+        deleted: 'danger'
+      }
+      return statusMap[status]
+    },
+    typeFilter(type) {
+      return calendarTypeKeyValue[type]
+    }
+  },
+  data() {
+    return {
+      title: '',
+      first_name: '',
+      last_name: '',
+      street_address: '',
+      street_address2: '',
+      is_login: '',
+      role: '',
+      city: '',
+      state: '',
+      country: '',
+      postcode: '',
+      customer_cat: '',
+      share_personal_data: '',
+      security_questions: '',
+      security_answer: '',
+      password: '',
+      password_confirmation: '',
+      email: '',
+      currency: '',
+      type: '',
+      phone_code: '',
+      phone_number: '',
+      status: 'published',
+
+      tableKey: 0,
+      list: null,
+      total: 0,
+      listLoading: true,
+      listQuery: {
+        page: 1,
+        limit: 20,
+        importance: undefined,
+        email: undefined,
+        type: undefined,
+        sort: '+id'
+      },
+      importanceOptions: [1, 2, 3],
+      calendarTypeOptions,
+      sortOptions: [{ label: 'ID Ascending', key: '+id' }, { label: 'ID Descending', key: '-id' }],
+      statusOptions: ['published', 'draft', 'deleted'],
+      showReviewer: false,
+      temp: {
+        id: undefined,
+        importance: 1,
+        remark: '',
+        timestamp: new Date(),
+        title: '',
+        first_name: '',
+        last_name: '',
+        street_address: '',
+        street_address2: '',
+        is_login: '',
+        role: '',
+        city: '',
+        state: '',
+        country: '',
+        postcode: '',
+        security_questions: '',
+        security_answer: '',
+        password: '',
+        password_confirmation: '',
+        customer_cat: '',
+        share_personal_data: '',
+        currency: '',
+        type: '',
+        status: 'published'
+      },
+      dialogCreateFormVisible: false,
+      dialogStatus: '',
+      textMap: {
+        update: 'Edit',
+        create: 'Create'
+      },
+      dialogPvVisible: false,
+      pvData: [],
+      rules: {
+        type: [{ required: true, message: 'type is required', trigger: 'change' }],
+        timestamp: [{ type: 'date', required: true, message: 'timestamp is required', trigger: 'change' }],
+        title: [{ required: true, message: 'title is required', trigger: 'blur' }]
+      },
+      downloadLoading: false
+    }
+  },
+  computed: {
+    full_name: {
+      get() {
+        return `${this.temp.first_name} ${this.temp.last_name}`
+      },
+      set(value) {
+        const [first_name, last_name] = value.split(' ')
+        this.$set(this.temp, 'first_name', first_name)
+        this.$set(this.temp, 'last_name', last_name)
+      }
+    }
+  },
+
+  created() {
+    this.getList()
+  },
+  methods: {
+    getList() {
+      this.listLoading = true
+      console.log('List loading')
+      // const params = {
+      //   page: this.listQuery.page,
+      //   limit: this.listQuery.limit,
+      //   importance: this.listQuery.importance,
+      //   search: this.listQuery.search,
+      //   type: this.listQuery.type,
+      //   sort: this.listQuery.sort
+      // }
+
+      axios.get(this.dynamic_base_url('admin/accounts'), {
+        headers: { Authorization: 'Bearer ' + getToken(), testing: 'Hello here' }
+      })
+        .then(response => {
+          this.list = response.data.data.map(item => ({ ...item, id: item.client_id }))
+
+          this.total = this.list.length
+
+          setTimeout(() => {
+            this.listLoading = false
+          }, 1.5 * 1000)
+        })
+        .catch(error => {
+          console.error('Error fetching data:', error)
+          this.listLoading = false
+        })
+    },
+    handleFilter() {
+      this.listLoading = true
+
+      axios.get(this.dynamic_base_url('admin/accounts'), {
+        params: {
+          title: this.listQuery.title,
+          email: this.listQuery.email,
+          page: this.listQuery.page,
+          limit: this.listQuery.limit,
+          importance: this.listQuery.importance,
+          type: this.listQuery.type,
+          sort: this.listQuery.sort
+        }
+      })
+        .then(response => {
+          this.list = response.data.data
+          this.total = this.list.length
+
+          axios.get(this.dynamic_base_url('admin/accounts'), params)
+            .then(response => {
+              this.list = response.data.data.data
+              this.total = this.list.length
+
+              // Just to simulate the time of the request
+              setTimeout(() => {
+                this.listLoading = false
+              }, 1.5 * 1000)
+            })
+            .catch(error => {
+              console.error('Error fetching data:', error)
+              this.listLoading = false
+            }, 1.5 * 1000)
+        })
+        .catch(error => {
+          console.error('Error fetching data:', error)
+          this.listLoading = false
+        })
+    },
+
+    handleModifyStatus(row, status) {
+      this.$message({
+        message: '操作Success',
+        type: 'success'
+      })
+      row.status = status
+    },
+    sortChange(data) {
+      const { prop, order } = data
+      if (prop === 'id') {
+        this.sortByID(order)
+      }
+    },
+    sortByID(order) {
+      if (order === 'ascending') {
+        this.listQuery.sort = '+id'
+      } else {
+        this.listQuery.sort = '-id'
+      }
+      this.handleFilter()
+    },
+    resetTemp() {
+      this.temp = {
+        id: undefined,
+        importance: 1,
+        remark: '',
+        timestamp: new Date(),
+        title: '',
+        status: 'published',
+        type: ''
+      }
+    },
+    handleCreate() {
+      this.resetTemp()
+      this.dialogCreateStatus = 'create'
+      this.dialogCreateFormVisible = true
+      this.$nextTick(() => {
+        this.$refs['accountForm'].clearValidate()
+      })
+    },
+    createAccountForm() {
+      const formData = {
+        first_name: this.first_name,
+        last_name: this.last_name,
+        street_address: this.street_address,
+        street_address2: this.street_address2,
+        where_did_you_hear_about_us: this.where_did_you_hear_about_us,
+        receive_mails: this.receive_mails,
+        is_login: this.is_login,
+        role: this.role,
+        city: this.city,
+        state: this.state,
+        country: this.country,
+        postcode: this.postcode,
+        customer_cat: this.customer_cat,
+        share_personal_data: this.share_personal_data,
+        security_questions: this.security_questions,
+        security_answer: this.security_answer,
+        password: this.password,
+        password_confirmation: this.password_confirmation,
+        currency: this.currency,
+        email: this.email,
+        phone_code: this.phone_code,
+        phone_number: this.phone_number
+      }
+      // Log the form data
+      // Make a POST request to create data
+      axios
+        .post(this.dynamic_base_url('admin/accounts/create'), formData, {
+          headers: {
+            Authorization: 'Bearer ' + getToken(),
+            testing: 'Hello here'
+          }
+        })
+        .then((response) => {
+          // Handle the response as needed
+          this.$message({
+            message: 'Data created successfully',
+            type: 'success',
+            duration: 5 * 1000
+          })
+
+          // Fetch the updated data after successful submission
+          this.getList()
+
+          // Optionally, you can reset the form fields after successful submission
+          this.$refs.billingForm.resetFields()
+        })
+        .catch(error => {
+          console.error('Error creating data:', error)
+          this.$message.error('Failed to create data')
+        })
+    },
+    showEditDialog(row) {
+      // Customize this part based on your data structure
+      this.editedItem = {
+        ...row
+
+      }
+
+      this.showEditModal = true
+    },
+    createData() {
+      this.$refs['dataForm'].validate((valid) => {
+        if (valid) {
+          this.temp.id = parseInt(Math.random() * 100) + 1024 // mock a id
+          this.temp.author = 'vue-element-admin'
+          createArticle(this.temp).then(() => {
+            this.list.unshift(this.temp)
+            this.dialogFormVisible = false
+            this.$notify({
+              title: 'Success',
+              message: 'Created Successfully',
+              type: 'success',
+              duration: 2000
+            })
+          })
+        }
+      })
+    },
+    handleUpdate(row) {
+      this.temp = Object.assign({}, row) // copy obj
+      this.temp.timestamp = new Date(this.temp.timestamp)
+      this.dialogStatus = 'update'
+      this.dialogFormVisible = true
+      this.$nextTick(() => {
+        this.$refs['dataForm'].clearValidate()
+      })
+    },
+    updateData() {
+      this.$refs['dataForm'].validate((valid) => {
+        if (valid) {
+          const tempData = Object.assign({}, this.temp)
+          tempData.timestamp = +new Date(tempData.timestamp)
+
+          // Use your API endpoint for updating data
+          // const updateApiUrl = `https://backend.uniquenetsys.com/api/v1/admin/account/update/${tempData.account_id}`
+
+          axios.put(this.dynamic_base_url(`admin/account/update/${tempData.account_id}`), tempData)
+            .then(() => {
+              const index = this.list.findIndex(v => v.account_id === this.temp.account_id)
+              this.list.splice(index, 1, this.temp)
+              this.dialogFormVisible = false
+              this.$notify({
+                title: 'Success',
+                message: 'Update Successfully',
+                type: 'success',
+                duration: 2000
+              })
+            })
+            .catch(error => {
+              console.error('Error updating data:', error)
+            })
+        }
+      })
+    },
+
+    handleDelete(row, index) {
+      axios.delete(this.dynamic_base_url(`admin/account/delete/${row.account_id}`))
+        .then(() => {
+          this.$notify({
+            title: 'Success',
+            message: 'Delete Successfully',
+            type: 'success',
+            duration: 2000
+          })
+          this.list.splice(index, 1)
+        })
+        .catch(error => {
+          console.error('Error deleting data:', error)
+        })
+    },
+
+    handleFetchPv(pv) {
+      fetchPv(pv).then(response => {
+        this.pvData = response.data.pvData
+        this.dialogPvVisible = true
+      })
+    },
+    handleDownload() {
+      this.downloadLoading = true
+      import('@/vendor/Export2Excel').then(excel => {
+        const tHeader = ['timestamp', 'title', 'type', 'importance', 'status']
+        const filterVal = ['timestamp', 'title', 'type', 'importance', 'status']
+        const data = this.formatJson(filterVal)
+        excel.export_json_to_excel({
+          header: tHeader,
+          data,
+          filename: 'table-list'
+        })
+        this.downloadLoading = false
+      })
+    },
+    formatJson(filterVal) {
+      return this.list.map(v => filterVal.map(j => {
+        if (j === 'timestamp') {
+          return parseTime(v[j])
+        } else {
+          return v[j]
+        }
+      }))
+    },
+    getSortClass: function(key) {
+      const sort = this.listQuery.sort
+      return sort === `+${key}` ? 'ascending' : 'descending'
+    }
+  }
+}
+</script>
