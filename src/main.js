@@ -56,7 +56,7 @@ Vue.use(Element, {
 })
 // const baseURL = 'http://domainmanagement.test'
 
-const baseURL = 'https://domainbackend.uniquenetsys.com'
+const baseURL = 'https://lsnppa.watchtowermanagement.ng/public'
 
 Vue.mixin({
   methods: {
