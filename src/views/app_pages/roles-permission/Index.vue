@@ -95,11 +95,11 @@
               />
 
               <!-- Delete Button -->
-              <el-button
+              <!-- <el-button
                 icon="el-icon-delete"
                 size="mini"
                 @click="showDeleteModal(scope.row)"
-              />
+              /> -->
             </el-button-group>
           </template>
         </el-table-column>
