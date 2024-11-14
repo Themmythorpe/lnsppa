@@ -342,7 +342,9 @@
           </el-form>
 
           <div slot="footer" class="dialog-footer">
-            <el-button @click="showChangeUserRoleDialog = false">Cancel</el-button>
+            <el-button @click="showChangeUserRoleDialog = false"
+              >Cancel</el-button
+            >
             <el-button
               :loading="isCreating"
               type="primary"
@@ -556,13 +558,13 @@ export default {
     handleChangeUserRole(row, index) {
       // console.log("Row index:", row, index);
       if (row.roles.length) {
-      this.changeUserRole = {
-        id: row.id,
-        new_user_role: row.roles[0].id,
-      };
+        this.changeUserRole = {
+          id: row.id,
+          new_user_role: row.roles[0].id,
+        };
       } else {
         this.changeUserRole.id = row.id;
-      };
+      }
 
       this.showChangeUserRoleDialog = true;
     },
@@ -637,10 +639,7 @@ export default {
     },
 
     async updateUser() {
-      if (
-        this.editUser.email &&
-        this.editUser.name
-      ) {
+      if (this.editUser.email && this.editUser.name) {
         const payload = this.editUser;
         // console.log("New User Data:", payload);
         this.isUpdating = true;

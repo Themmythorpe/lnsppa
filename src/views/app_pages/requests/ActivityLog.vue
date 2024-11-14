@@ -2,7 +2,10 @@
   <div class="editor-container">
     <el-card class="box-card">
       <div class="d-flex justify-content-between align-items-center mb-4">
-        <h4 class="text-jumbo text-ginormous mb-0" v-if="checkPermission(['manage users'])">
+        <h4
+          class="text-jumbo text-ginormous mb-0"
+          v-if="checkPermission(['manage users'])"
+        >
           Manage Activity Log
         </h4>
         <div class="d-flex align-items-center">
@@ -17,14 +20,15 @@
       </div>
 
       <el-table
-          v-loading="loading"
+        v-loading="loading"
         :key="tableKey"
         highlight-current-row
         :current-page.sync="currentPage"
         :page-size="pageSize"
         :total="totalLog"
         :data="list"
-        style="width: 100%; padding-top: 15px">
+        style="width: 100%; padding-top: 15px"
+      >
         <el-table-column label="S/N" width="50" align="center">
           <template slot-scope="scope">
             {{ (currentPage - 1) * pageSize + scope.$index + 1 }}
@@ -32,7 +36,7 @@
         </el-table-column>
         <el-table-column label="Causer Name" min-width="150">
           <template slot-scope="scope">
-            {{ scope.row.causer.name || 'N/A' }}
+            {{ scope.row.causer.name || "N/A" }}
           </template>
         </el-table-column>
         <el-table-column label="Description" min-width="200">
@@ -55,7 +59,7 @@
       <div class="d-flex justify-content-between align-items-center pt-4">
         <div class="showing_items">
           <span>
-          Showing {{ from }} to {{ to }} of {{ totalLog }} entries
+            Showing {{ from }} to {{ to }} of {{ totalLog }} entries
           </span>
         </div>
         <div class="d-flex align-items-center">
@@ -63,7 +67,7 @@
             v-model="pageSize"
             placeholder="Items per page"
             @change="handleSizeChange"
-            style="width: 120px; margin-right: 10px;"
+            style="width: 120px; margin-right: 10px"
           >
             <el-option
               v-for="size in pageSizes"
@@ -88,9 +92,9 @@
 </template>
 
 <script>
-import checkPermission from '@/utils/permission'
-import axios from 'axios'
-import { getToken } from '@/utils/auth'
+import checkPermission from "@/utils/permission";
+import axios from "axios";
+import { getToken } from "@/utils/auth";
 
 export default {
   data() {
@@ -128,22 +132,22 @@ export default {
     checkPermission,
 
     formatSubjectType(type) {
-      if (!type) return 'N/A';
-      return type.split('\\').pop();
+      if (!type) return "N/A";
+      return type.split("\\").pop();
     },
 
     async fetchData() {
       this.loading = true;
       try {
         const response = await axios.get(
-          this.dynamic_base_url('logs/activity-logs'),
+          this.dynamic_base_url("logs/activity-logs"),
           {
             headers: { Authorization: `Bearer ${getToken()}` },
             params: {
               page: this.currentPage,
               per_page: this.pageSize,
-              search: this.listQuery.search
-            }
+              search: this.listQuery.search,
+            },
           }
         );
 
@@ -155,7 +159,7 @@ export default {
         this.currentPage = activities.current_page;
       } catch (error) {
         console.error("Error fetching activity logs:", error);
-        this.$message.error('Failed to fetch activity logs');
+        this.$message.error("Failed to fetch activity logs");
       } finally {
         this.loading = false;
       }
@@ -175,8 +179,8 @@ export default {
     handleSearch() {
       this.currentPage = 1;
       this.fetchData();
-    }
-  }
+    },
+  },
 };
 </script>
 
